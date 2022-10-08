@@ -92,7 +92,7 @@ async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
 @app.post("/users", response_model=user_pydantic, tags=["users"])
 async def create_user(users: userIn_pydantic):
     user_obj = User(
-        username=users.username, password_hash=bcrypt.hash(users.password_hash), is_active = users.is_active
+        username=users.username, password_hash=bcrypt.hash(users.password_hash)
     )
     await user_obj.save()
     return await user_pydantic.from_tortoise_orm(user_obj)
