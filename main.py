@@ -1,4 +1,3 @@
-from xml.etree.ElementInclude import include
 import jwt
 from fastapi import Depends, FastAPI, HTTPException, status
 from starlette.responses import FileResponse
@@ -18,28 +17,26 @@ app = FastAPI()
 # mounting static folder from (/assets)
 app.mount("/assets", StaticFiles(directory="assets"), name="assets")
 
+# index file url
 HOME_INDEX = "assets/index.html"
 
 
+# serving a single index html file 
 
 
-# serving a single index html file
-
-@app.get("/")
+@app.get("/", tags=['login'])
 async def read_index():
     return FileResponse(HOME_INDEX)
 
 
-@app.get("/login")
-async def read_index():
-    return FileResponse(HOME_INDEX)
-
-@app.get("/user_home")
+@app.get("/login", tags=['login'])
 async def read_index():
     return FileResponse(HOME_INDEX)
 
 
-
+@app.get("/user_home", tags=['login'])
+async def read_index():
+    return FileResponse(HOME_INDEX)
 
 
 # user details authenticator
@@ -67,7 +64,7 @@ async def get_curr_user(token: str = Depends(oauth2_scheme)):
     return await user_pydantic.from_tortoise_orm(user)
 
 
-# token generator
+# token generator on each login
 @app.post("/token", tags=["tokens"])
 async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
 
@@ -80,6 +77,7 @@ async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
 
     # user.set_active()
     await user.filter(id=user.id).update(is_active=True)
+
     # conv user model to pydantic
     user_obj = await user_pydantic.from_tortoise_orm(user)
 
@@ -91,7 +89,7 @@ async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
 
 
 # Backend point to create users for testing the login function
-@app.post("/users", response_model=user_pydantic, tags=["tokens"])
+@app.post("/users", response_model=user_pydantic, tags=["users"])
 async def create_user(users: userIn_pydantic):
     user_obj = User(
         username=users.username, password_hash=bcrypt.hash(users.password_hash)
@@ -100,20 +98,16 @@ async def create_user(users: userIn_pydantic):
     return await user_pydantic.from_tortoise_orm(user_obj)
 
 
-# TODO change based on frontend code
 # user home route returning user obj
-@app.get("/whoami", response_model=userOut_pydantic, tags=["tokens"])
+@app.get("/whoami", response_model=userOut_pydantic, tags=["users"])
 async def get_user(user: user_pydantic = Depends(get_curr_user)):
     return user.dict(include={"username"})
 
-
-@app.get("/logmeout")
+# logmeout route to update db when user logs out
+@app.get("/logmeout", tags=['login'])
 async def log_out(user: user_pydantic = Depends(get_curr_user)):
     await User.filter(id=user.id).update(is_active=False)
     return user.dict(include={"username", "is_active"})
-    
-
-
 
 
 # registering the db
