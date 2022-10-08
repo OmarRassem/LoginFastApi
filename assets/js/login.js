@@ -1,27 +1,89 @@
-const loginPage = document.getElementById("main_btn");
-const row1 = document.getElementById("row-1");
-const row2 = document.getElementById("row-2");
-const row3 = document.getElementById("row-3");
+const currURL = window.location.href.split(window.location.host)[1]
+let savedToken = sessionStorage.getItem('Authentication')
 
-/* loginPage.addEventListener("click", function (e) {
-    console.log("HI");
-    //httpGetAsync('/login')
-    window.location.href = '/login';
-}); */
+
+const urls = { HOME: "/", LOGIN: '/login', USER_HOME: '/user_home' }
 
 
 
-let whoami = new XMLHttpRequest()
-whoami.open('GET', '/whoami')
-whoami.onload = function () {
-    let jsonData = JSON.parse(whoami.responseText)
-    console.log(jsonData)
-    renderHTML(row1,"<h1>" + jsonData.content + "</h1>")
+
+
+if (currURL == urls.HOME) {
+
+    const Home = async () => {
+        let res = await checkUser(savedToken)
+        console.log(res)
+        if (res != 401) {
+            console.log(res)
+            renderHomeWithUser(res)
+
+        } else {
+            renderHome()
+        }
+    }
+
+    Home()
+
+} else if (currURL == urls.LOGIN) {
+    const Login = async () => {
+        let res = await checkUser(savedToken)
+        if (res != 401) {
+            //console.log(res)
+            redirectPage(urls.USER_HOME)
+
+        } else {
+            await renderLogin()
+
+            const loginPage = document.querySelector("#main_btn");
+            const userInput = document.querySelector('#userId');
+            const passInput = document.querySelector("#passId");
+
+            loginPage.addEventListener('click', async () => {
+                let username = userInput.value;
+                let password = passInput.value;
+
+                let token = await login(username, password)
+                sessionStorage.setItem('Authentication', token)
+                console.log(token)
+                if (token != null && token != 404 && token != 'undefined') {
+                    renderHTML(row3, `Login Successful. Directing to home page...`)
+                    redirectPage(urls.USER_HOME)
+                } else {
+                    renderHTML(row3, `Please enter the correct credentials.`)
+                }
+
+            })
+
+        }
+    }
+
+    Login()
+
+} else if (currURL == urls.USER_HOME) {
+    const UserHome = async () => {
+        let res = await checkUser(savedToken)
+        if (res != 401) {
+
+            await renderUserHome(res)
+
+            const logout = document.querySelector("#main_btn");
+
+
+            logout.addEventListener('click', async () => {
+                console.log("Logging out")
+                await logmeout(savedToken)
+                sessionStorage.setItem('Authentication', null)
+
+                redirectPage(urls.HOME)
+            })
+
+        } else {
+
+            redirectPage(urls.LOGIN)
+
+        }
+    }
+
+    UserHome()
 }
-whoami.send()
 
-function renderHTML(id,data){
-    let htmlString = data;
-    id.innerHTML = htmlString; 
-
-}
