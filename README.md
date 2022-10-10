@@ -125,6 +125,6 @@ The frontend is served the same `index.html` file through three main GET request
 
 ### Parsing the Static Files
 
-The backend serves the `index.html` which references two JavaScript files, `login.js` and `functions`.
+The backend serves the `index.html` which references two JavaScript files, `login.js` and `functions.js`.
 
 The former takes care of checking the current browser URL and executes the rendering functions accordingly. The latter includes all the functions used to handle the backend and render the webpages.
